@@ -1,4 +1,35 @@
+/*
+
+The package works on 2 tables on a PostgreSQL data base server.
+
+The names of the tables are:
+
+	* Users
+	* Userdata
+
+The definitions of the tables in the PostgreSQL server are:
+
+	CREATE TABLE Users (
+    	ID SERIAL,
+    	Username VARCHAR(100) PRIMARY KEY
+	);
+
+	CREATE TABLE Userdata (
+    	UserID Int NOT NULL,
+    	Name VARCHAR(100),
+    	Surname VARCHAR(100),
+    	Description VARCHAR(200)
+	);
+
+	This is rendered as code
+
+This is not rendered as code
+
+*/
 package post05
+
+// BUG(1): Function ListUsers() not working as expected
+// BUG(2): Function AddUser() is too slow
 
 import (
 	"database/sql"
@@ -9,6 +40,14 @@ import (
 	_ "github.com/lib/pq"
 )
 
+/*
+This block of global variables holds the connection details to the Postgres server
+	Hostname: is the IP or the hostname of the server
+ 	Port: is the TCP port the DB server listens to
+	Username: is the username of the database user
+	Password: is the password of the database user
+	Database: is the name of the Database in PostgreSQL
+*/
 // Connection details
 var (
 	Hostname = ""
@@ -18,8 +57,8 @@ var (
 	Database = ""
 )
 
-// Userdata is for holding full user data
-// Userdata table + Username
+// The Userdata structure is for holding full user data
+// from the Userdata table and the Username from the
 type Userdata struct {
 	ID          int
 	Username    string
@@ -28,6 +67,8 @@ type Userdata struct {
 	Description string
 }
 
+// openConnection() is for opening the Postgres connection
+// in order to be used by the other functions of the package.
 func openConnection() (*sql.DB, error) {
 	// connection string
 	conn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -41,6 +82,8 @@ func openConnection() (*sql.DB, error) {
 	return db, nil
 }
 
+// The function returns the User ID of the username
+// -1 if the user does not exist
 func exists(username string) int {
 	username = strings.ToLower(username)
 
@@ -68,6 +111,10 @@ func exists(username string) int {
 	return userID
 }
 
+// AddUser adds a new user to the database
+//
+// Returns new User ID
+// -1 if there was an error
 func AddUser(d Userdata) int {
 	d.Username = strings.ToLower(d.Username)
 
@@ -107,6 +154,11 @@ func AddUser(d Userdata) int {
 	return userID
 }
 
+/*
+	DeleteUser deletes an existing user if the user exists.
+
+	It requires the User ID of the user to be deleted.
+*/
 func DeleteUser(id int) error {
 	db, err := openConnection()
 	if err != nil {
@@ -149,6 +201,7 @@ func DeleteUser(id int) error {
 }
 
 // ListUsers lists all users in the database
+// and returns a slice of Userdata.
 func ListUsers() ([]Userdata, error) {
 	Data := []Userdata{}
 	db, err := openConnection()
@@ -181,7 +234,11 @@ func ListUsers() ([]Userdata, error) {
 	return Data, nil
 }
 
+
 // UpdateUser is for updating an existing user
+// given a Userdata structure.
+// The user ID of the user to be updated is found
+// inside the function.
 func UpdateUser(d Userdata) error {
 	db, err := openConnection()
 	if err != nil {
