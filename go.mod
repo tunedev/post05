@@ -1,4 +1,4 @@
-module post05
+module github/tunedev/post05
 
 go 1.23.2
 
